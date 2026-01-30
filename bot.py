@@ -112,15 +112,5 @@ async def on_ready():
         daily_leaderboard.start()
     print(f"Bot is online as {bot.user}")
 
-# =============================
-# Cloudflare-safe login loop
-# =============================
-while True:
-    try:
-        print("Attempting Discord login...")
-        bot.run(TOKEN, reconnect=False)
-    except Exception as e:
-        print("Discord blocked login (likely Cloudflare 1015).")
-        print("Waiting 5 minutes before retrying.")
-        print(e)
-        _time.sleep(300)  # ⏱️ 5 minutes
+if __name__ == "__main__":
+    bot.run(TOKEN)

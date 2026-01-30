@@ -104,4 +104,13 @@ async def on_ready():
         daily_leaderboard.start()
     print(f"Bot is online as {bot.user}")
 
-bot.run(TOKEN)
+import time as _time
+
+while True:
+    try:
+        bot.run(TOKEN, reconnect=False)
+    except Exception as e:
+        print("Login failed or rate-limited. Sleeping for 60 seconds.")
+        print(e)
+        _time.sleep(60)
+

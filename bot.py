@@ -6,6 +6,7 @@ import pytz
 import os
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import time as _time
 
 # =============================
 # Render keep-alive web server
@@ -15,6 +16,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot is running")
+
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
 
 def run_server():
     port = int(os.environ.get("PORT", 10000))
@@ -36,6 +41,9 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+# =============================
+# Data storage
+# =============================
 DATA_FILE = "reactions.json"
 
 def load_data():
@@ -52,14 +60,14 @@ def save_data(data):
 reaction_counts = load_data()
 
 # =============================
-# Reaction tracking
+# Reaction tracking (RELIABLE)
 # =============================
 @bot.event
-async def on_reaction_add(reaction, user):
-    if user.bot:
+async def on_raw_reaction_add(payload):
+    if payload.user_id == bot.user.id:
         return
 
-    uid = str(user.id)
+    uid = str(payload.user_id)
     reaction_counts[uid] = reaction_counts.get(uid, 0) + 1
     save_data(reaction_counts)
 
@@ -104,13 +112,15 @@ async def on_ready():
         daily_leaderboard.start()
     print(f"Bot is online as {bot.user}")
 
-import time as _time
-
+# =============================
+# Cloudflare-safe login loop
+# =============================
 while True:
     try:
+        print("Attempting Discord login...")
         bot.run(TOKEN, reconnect=False)
     except Exception as e:
-        print("Login failed or rate-limited. Sleeping for 60 seconds.")
+        print("Discord blocked login (likely Cloudflare 1015).")
+        print("Waiting 5 minutes before retrying.")
         print(e)
-        _time.sleep(60)
-
+        _time.sleep(300)  # ⏱️ 5 minutes
